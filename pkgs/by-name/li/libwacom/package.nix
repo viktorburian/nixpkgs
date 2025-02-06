@@ -22,6 +22,8 @@ stdenv.mkDerivation (finalAttrs: {
     "dev"
   ];
 
+  hardeningDisable = [ "all" ];
+
   src = fetchFromGitHub {
     owner = "linuxwacom";
     repo = "libwacom";
