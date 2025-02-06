@@ -22,6 +22,10 @@ stdenv.mkDerivation rec {
   # so the updates need to happen separately on staging.
   version = "24.3.4";
 
+  patches = [
+    ./enable-static.patch
+  ];
+
   src = fetchFromGitLab {
     domain = "gitlab.freedesktop.org";
     owner = "mesa";
