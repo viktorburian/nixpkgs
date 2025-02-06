@@ -59,6 +59,7 @@ stdenv.mkDerivation rec {
 
   patches = [
     ./udev-absolute-path.patch
+    ./enable-static.patch
   ];
 
   nativeBuildInputs = [
