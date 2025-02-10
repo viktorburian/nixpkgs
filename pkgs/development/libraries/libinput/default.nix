@@ -49,6 +49,8 @@ stdenv.mkDerivation rec {
 
   outputs = [ "bin" "out" "dev" ];
 
+  hardeningDisable = [ "all" ];
+
   src = fetchFromGitLab {
     domain = "gitlab.freedesktop.org";
     owner = "libinput";
