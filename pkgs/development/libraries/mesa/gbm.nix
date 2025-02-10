@@ -26,6 +26,8 @@ stdenv.mkDerivation rec {
     ./enable-static.patch
   ];
 
+  hardeningDisable = [ "all" ];
+
   src = fetchFromGitLab {
     domain = "gitlab.freedesktop.org";
     owner = "mesa";
