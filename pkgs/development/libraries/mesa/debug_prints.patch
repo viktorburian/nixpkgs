@@ -1,0 +1,116 @@
+diff --git a/src/gbm/main/backend.c b/src/gbm/main/backend.c
+index 321c7e10141..2f0a8b7ed1f 100644
+--- a/src/gbm/main/backend.c
++++ b/src/gbm/main/backend.c
+@@ -95,11 +95,15 @@ backend_create_device(const struct gbm_backend_desc *bd, int fd)
+    struct gbm_device *dev = bd->backend->v0.create_device(fd, abi_ver);
+ 
+    if (dev) {
++      printf("DEBUG: backend_create_device: db->name: %s\n", bd->name);
+       if (abi_ver != dev->v0.backend_version) {
++         printf("DEBUG: backend_create_device: wrong abi_ver\n");
+          _gbm_device_destroy(dev);
+          return NULL;
+       }
+       dev->v0.backend_desc = bd;
++   } else {
++      printf("DEBUG: %s, %d\n", __FILE__, __LINE__);
+    }
+ 
+    return dev;
+@@ -113,29 +117,44 @@ load_backend_by_name(const char *name, int fd, bool warn_on_fail)
+                                       DEFAULT_BACKENDS_PATH,
+                                       warn_on_fail);
+ 
+-   if (!lib)
++   printf("DEBUG: name: %s\n", name);
++   printf("DEBUG: backend_search_path_vars: %s\n", *backend_search_path_vars);
++
++   if (!lib) {
++      printf("DEBUG: load_backend_by_name, %d; loader_open_driver_lib FAIL\n", __LINE__);
+       return NULL;
++   }
+ 
+    struct gbm_device *dev = NULL;
+    struct gbm_backend_desc *backend_desc;
+    const struct gbm_backend *gbm_backend;
+    GBM_GET_BACKEND_PROC_PTR get_backend;
+ 
++   printf("DEBUG: load_backend_by_name: dlsym\n");
+    get_backend = dlsym(lib, GBM_GET_BACKEND_PROC_NAME);
+ 
+-   if (!get_backend)
++   if (!get_backend) {
++      printf("DEBUG: load_backend_by_name, %d; dlsym(GBM_GET_BACKEND_PROC_NAME) FAIL\n", __LINE__);
+       goto fail;
++   }
+ 
++   printf("DEBUG: %s, %d\n", __FILE__, __LINE__);
+    gbm_backend = get_backend(&gbm_core);
++   printf("DEBUG: load_backend_by_name: create_backend_desc\n");
+    backend_desc = create_backend_desc(name, gbm_backend, lib);
+ 
+-   if (!backend_desc)
++   if (!backend_desc) {
++      printf("DEBUG: load_backend_by_name, %d; create_backend_desc FAIL\n", __LINE__);
+       goto fail;
++   }
+ 
++   printf("DEBUG: %s, %d\n", __FILE__, __LINE__);
+    dev = backend_create_device(backend_desc, fd);
+ 
+-   if (!dev)
++   if (!dev) {
++      printf("DEBUG: load_backend_by_name, %d; backend_create_device FAIL\n",__LINE__);
+       free_backend_desc(backend_desc);
++   }
+ 
+    return dev;
+ 
+@@ -147,17 +166,27 @@ fail:
+ struct gbm_device *
+ _gbm_create_device(int fd)
+ {
++   printf("DEBUG: Func _gbm_create_device\n");
+    struct gbm_device *dev = NULL;
+ 
+    const char *b = getenv("GBM_BACKEND");
+    if (b) {
+       dev = load_backend_by_name(b, fd, true);
++      if (!dev) {
++         printf("DEBUG: _gbm_create_device: dev == NULL\n");
++         printf("DEBUG: _gbm_create_device: GBM_BACKEND: %s\n", b);
++         printf("DEBUG: _gbm_create_device: fd: %d\n", fd);
++      }
+       if (dev) return dev;
+    }
+ 
+    drmVersionPtr v = drmGetVersion(fd);
+    if (v) {
++      printf("DEBUG: _gbm_create_device: drmGetVersion: v->name: %s\n", v->name);
+       dev = load_backend_by_name(v->name, fd, false);
++      if (dev == NULL) {
++         printf("DEBUG: _gbm_create_device: dev == NULL\n");
++      }
+       drmFreeVersion(v);
+       if (dev) return dev;
+    }
+diff --git a/src/loader/loader.c b/src/loader/loader.c
+index e8a9b76913a..a64dfecdf1d 100644
+--- a/src/loader/loader.c
++++ b/src/loader/loader.c
+@@ -819,11 +819,14 @@ loader_open_driver_lib(const char *driver_name,
+                p, driver_name, lib_suffix);
+       driver = dlopen(path, RTLD_NOW | RTLD_GLOBAL);
+       if (driver == NULL) {
++         printf("DEBUG: loader.c, 1: driver path: %s\n", path);
+          snprintf(path, sizeof(path), "%.*s/%s%s.so", len,
+                   p, driver_name, lib_suffix);
+          driver = dlopen(path, RTLD_NOW | RTLD_GLOBAL);
+          if (driver == NULL) {
++            printf("DEBUG: loader.c, 2: driver path: %s\n", path);
+             dl_error = dlerror();
++            printf("DEBUG: dl_error: %s\n", dl_error);
+             log_(_LOADER_DEBUG, "MESA-LOADER: failed to open %s: %s\n",
+                  path, dl_error);
+          }

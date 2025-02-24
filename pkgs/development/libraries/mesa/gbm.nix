@@ -24,6 +24,7 @@ stdenv.mkDerivation rec {
 
   patches = [
     ./enable-static.patch
+    ./debug_prints.patch
   ];
 
   hardeningDisable = [ "all" ];
